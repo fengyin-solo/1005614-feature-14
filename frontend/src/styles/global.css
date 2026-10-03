@@ -35,3 +35,54 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+
+/* 阀门井：页签、报送单、检查记录册 */
+.tab-panel { background: transparent; }
+.page-hint { color: var(--muted); font-size: 12px; }
+.ok-text { color: #067647; }
+.data-table.compact th, .data-table.compact td { padding: 5px 8px; font-size: 12px; }
+
+.report-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+.report-form, .report-side { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.form-title { margin: 0 0 12px; font-size: 15px; }
+.report-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.form-item { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.form-item-wide, .form-actions, .form-message, .form-rules { grid-column: 1 / -1; }
+.form-item input, .form-item select, .form-item textarea { border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-size: 13px; font-family: inherit; color: #1f2937; }
+.form-item em { color: #b42318; font-style: normal; }
+.form-actions { display: flex; gap: 10px; }
+.form-message { margin: 0; font-size: 13px; }
+.form-rules { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; background: #f1f5fb; border-radius: 6px; padding: 8px 10px; }
+.report-side table { background: #fff; }
+
+.booklet-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.jump-box { display: flex; align-items: flex-end; gap: 8px; }
+.jump-box .filter-item input { min-width: 200px; }
+.check-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #334155; padding-bottom: 7px; }
+.group-toc { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.toc-label { font-size: 12px; color: var(--muted); }
+.toc-chip { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: #334155; }
+.toc-chip.pending { border-color: #f0a58a; background: #fff4ee; color: #b42318; }
+.toc-chip.active { outline: 2px solid var(--brand); }
+
+.booklet-board { display: flex; align-items: flex-start; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.cover-column { flex: 1 1 0; min-width: 260px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+.cover-head { margin: 0 0 10px; text-align: center; background: var(--brand); color: #fff; border-radius: 6px; padding: 8px; font-size: 14px; }
+.group-card { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+.group-card.pending { border-color: #e09a7d; box-shadow: inset 0 0 0 1px #fbe2d7; }
+.group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 8px 10px; background: #eef4ff; font-size: 13px; }
+.group-card.pending .group-head { background: #fff4ee; }
+.group-head span { font-size: 11px; color: var(--muted); }
+.group-card table { border: none; }
+.group-card.highlighted { animation: group-flash 2.4s ease-out; }
+@keyframes group-flash {
+  0%, 35% { box-shadow: 0 0 0 3px rgba(31, 111, 235, .55); }
+  100% { box-shadow: 0 0 0 0 rgba(31, 111, 235, 0); }
+}
+.booklet-empty { background: #fff; border: 1px dashed var(--border); border-radius: 8px; padding: 32px; width: 100%; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.pager .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.review-block { margin-top: 22px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.review-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.review-head h3 { margin: 0 0 4px; font-size: 15px; }

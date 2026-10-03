@@ -57,3 +57,36 @@ export function resetRows(key: string): EntryRow[] {
 export function storageKey(): string {
   return STORAGE_KEY
 }
+
+// 阀门井检查记录、探漏待复核等独立集合各自占一个 localStorage 键，
+// 与既有「按模块分桶」的 entries 数据互不影响，刷新后仍在。
+const collectionCache = new Map<string, unknown[]>()
+
+export function readCollection<T>(key: string, seed: T[]): T[] {
+  const cached = collectionCache.get(key) as T[] | undefined
+  if (cached) {
+    return cached
+  }
+  let next: T[] = clone(seed)
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const raw = window.localStorage.getItem(key)
+    if (raw) {
+      try {
+        next = JSON.parse(raw) as T[]
+      } catch {
+        next = clone(seed)
+      }
+    } else {
+      window.localStorage.setItem(key, JSON.stringify(next))
+    }
+  }
+  collectionCache.set(key, next)
+  return next
+}
+
+export function writeCollection<T>(key: string, rows: T[]): void {
+  collectionCache.set(key, rows)
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem(key, JSON.stringify(rows))
+  }
+}

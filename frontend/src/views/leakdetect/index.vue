@@ -63,8 +63,56 @@
       </tbody>
     </table>
 
+    <section class="review-block">
+      <header class="review-head">
+        <div>
+          <h3>阀门井检查结果待复核清单</h3>
+          <p class="page-desc">阀门井检查报送受理后，检查结果自动回写到这里，待复核 {{ pendingReviews.length }} 条。</p>
+        </div>
+        <button class="btn" type="button" @click="reloadReviews">刷新清单</button>
+      </header>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>井编号</th>
+            <th>所属管段</th>
+            <th>检查日期</th>
+            <th>养护措施</th>
+            <th>检查结果</th>
+            <th>复核状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in reviewRows" :key="item.id">
+            <td>{{ item.wellCode }}</td>
+            <td>{{ item.section || '—' }}</td>
+            <td>{{ item.inspectDate }}</td>
+            <td>{{ item.measure }}</td>
+            <td>{{ item.result }}</td>
+            <td>{{ item.status }}</td>
+            <td class="row-actions">
+              <button
+                v-if="item.status === '待复核'"
+                class="link"
+                type="button"
+                @click="resolveReview(item.id)"
+              >
+                确认复核
+              </button>
+              <span v-else class="page-hint">已闭环</span>
+            </td>
+          </tr>
+          <tr v-if="!reviewRows.length">
+            <td colspan="7" class="empty-state">暂无回写过来的阀门井检查结果</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <footer class="page-foot">
       <span>共 {{ total }} 条管网探漏记录</span>
+      <span v-if="reviewMessage" class="ok-text">{{ reviewMessage }}</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
     </footer>
   </section>
@@ -79,7 +127,8 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import { confirmLeakReview, listLeakReviews } from '@/api/valvewell-service'
+import type { EntryRow, LeakReviewItem } from '@/data/types'
 
 const meta = moduleMeta('leakdetect')
 const columns = ["探漏编号", "探测管段", "探测方法", "漏点数量", "漏点位置", "处理建议", "探测日期", "探漏状态"]
@@ -133,5 +182,24 @@ function reload() {
   }
 }
 
-onMounted(reload)
+const reviewRows = ref<LeakReviewItem[]>([])
+const reviewMessage = ref('')
+const pendingReviews = computed(() => reviewRows.value.filter((item) => item.status === '待复核'))
+
+function reloadReviews() {
+  reviewRows.value = listLeakReviews()
+}
+
+function resolveReview(id: number) {
+  const result = confirmLeakReview(id)
+  reviewMessage.value = result.message
+  if (result.ok) {
+    reloadReviews()
+  }
+}
+
+onMounted(() => {
+  reload()
+  reloadReviews()
+})
 </script>
