@@ -18,6 +18,81 @@
       </article>
     </div>
 
+    <!-- 阀门井检查结果回写过来的待复核清单：确认后登记一条「需复探」，排除则只标记不建单。 -->
+    <section class="review-panel">
+      <header class="review-head">
+        <h3>阀门井检查回写 · 待复核清单</h3>
+        <div class="review-filters">
+          <button
+            v-for="option in reviewStateOptions"
+            :key="option"
+            class="btn"
+            type="button"
+            :class="{ primary: reviewState === option }"
+            @click="setReviewState(option)"
+          >
+            {{ option }}
+          </button>
+          <span class="review-count">共 {{ reviews.length }} 条</span>
+        </div>
+      </header>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>复核单号</th>
+            <th>井编号</th>
+            <th>所属管段</th>
+            <th>井盖状况</th>
+            <th>养护措施</th>
+            <th>检查日期</th>
+            <th>检查人</th>
+            <th>复核内容</th>
+            <th>状态</th>
+            <th>回写时间</th>
+            <th>复核操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in reviews" :key="item.id">
+            <td>{{ item.id }}</td>
+            <td>{{ item.井编号 }}</td>
+            <td>{{ item.所属管段 || '—' }}</td>
+            <td>{{ item.井盖状况 || '—' }}</td>
+            <td>{{ item.养护措施 || '—' }}</td>
+            <td>{{ item.检查日期 || '—' }}</td>
+            <td>{{ item.检查人 || '—' }}</td>
+            <td class="review-note">{{ item.备注 }}</td>
+            <td>
+              <span class="review-state" :class="`state-${item.state}`">{{ item.state }}</span>
+            </td>
+            <td>{{ item.createdAt }}</td>
+            <td class="row-actions">
+              <button
+                v-if="item.state === '待复核'"
+                class="link"
+                type="button"
+                @click="resolveReview(item.id, '确认')"
+              >
+                确认并登记复探
+              </button>
+              <button
+                v-if="item.state === '待复核'"
+                class="link link-danger"
+                type="button"
+                @click="resolveReview(item.id, '排除')"
+              >
+                排除
+              </button>
+              <span v-else class="muted-text">已处理</span>
+            </td>
+          </tr>
+          <tr v-if="!reviews.length">
+            <td :colspan="11" class="empty-state">当前没有{{ reviewState === '全部' ? '' : reviewState }}的复核单</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <p class="status-legend">
       <span v-for="item in statusSummary" :key="item.status" class="legend-item">
         {{ item.status }}：{{ item.count }}
@@ -76,28 +151,63 @@ import { computed, onMounted, ref } from 'vue'
 import {
   downloadEntries,
   listEntries,
+  listLeakReviews,
   moduleMeta,
+  resolveLeakReview,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, LeakReviewItem } from '@/data/types'
 
 const meta = moduleMeta('leakdetect')
 const columns = ["探漏编号", "探测管段", "探测方法", "漏点数量", "漏点位置", "处理建议", "探测日期", "探漏状态"]
 const actions = ["提交探测", "确认处理", "要求复探"]
 const statuses = ["待探测", "探测中", "已处理", "需复探"]
-const stats = [{"label": "待探测管段", "value": 0}, {"label": "探测中管段", "value": 0}, {"label": "本月漏点数", "value": 0}]
+const reviewStateOptions = ['待复核', '已确认', '已排除', '全部'] as const
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+const reviews = ref<LeakReviewItem[]>([])
+const reviewState = ref<(typeof reviewStateOptions)[number]>('待复核')
+
+const stats = computed(() => {
+  const pending = listLeakReviews('待复核').length
+  const recheck = rows.value.filter((row) => String(row.status) === '需复探').length
+  return [
+    { label: '阀门井回写待复核', value: pending },
+    { label: '需复探管段', value: recheck },
+    { label: '探漏台账总量', value: total.value },
+  ]
+})
+
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
 )
+
+function setReviewState(state: (typeof reviewStateOptions)[number]) {
+  reviewState.value = state
+  loadReviews()
+}
+
+function loadReviews() {
+  reviews.value = listLeakReviews(reviewState.value)
+}
+
+function resolveReview(reviewId: string, resolution: '确认' | '排除') {
+  errorMessage.value = ''
+  const result = resolveLeakReview(reviewId, resolution)
+  if (!result.ok) {
+    errorMessage.value = result.message
+  }
+  loadReviews()
+  reload()
+}
 
 function resetFilters() {
   filters.value = {}
@@ -133,5 +243,8 @@ function reload() {
   }
 }
 
-onMounted(reload)
+onMounted(() => {
+  reload()
+  loadReviews()
+})
 </script>
